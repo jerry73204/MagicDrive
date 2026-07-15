@@ -845,6 +845,8 @@ class BEVControlNetModel(ModelMixin, ConfigMixin):
         # 2. pre-process
         sample = self.conv_in(sample)
 
+        # torch2 port: conditions may arrive fp32 while the model runs fp16
+        controlnet_cond = controlnet_cond.to(dtype=sample.dtype)
         controlnet_cond = self.controlnet_cond_embedding(controlnet_cond)
 
         sample += controlnet_cond
