@@ -66,6 +66,14 @@ def run_pipe(cfg, pipe, data, seed=None, prompt="", step=None, scale=None):
 
     generator = torch.manual_seed(cfg.seed if seed is None else seed)
     weight_dtype = pipe.unet.dtype
+
+    # demo/data/*.pth carries 200x200 BEV maps (224x400-era); higher-res models
+    # (e.g. 424x800) expect cfg.model.controlnet.map_size (400x400) — upsample.
+    bev = val_input["bev_map_with_aux"]
+    want = tuple(cfg.model.controlnet.map_size[-2:])
+    if tuple(bev.shape[-2:]) != want:
+        val_input["bev_map_with_aux"] = torch.nn.functional.interpolate(
+            bev.float(), size=want, mode="nearest")
     pipeline_param = {**cfg.runner.pipeline_param}
     if step is not None:
         pipeline_param["num_inference_steps"] = step
